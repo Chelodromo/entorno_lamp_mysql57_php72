@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./config/php
+    container_name: lamp_symfony_web
+    ports:
+      - "80:80"
+    volumes:
+      - ./www:/var/www/html
+      - ./config/apache/vhosts.conf:/etc/apache2/sites-enabled/000-default.conf
+    depends_on:
+      - db
+    networks:
+      - lamp-network
+
+  db:
+    image: mysql:5.7
+    # Forzar arquitectura AMD64 (Vital para Macs con chip M1/M2/M3)
+    platform: linux/amd64
+    container_name: lamp_symfony_db
+    # Configuración crítica:
+    # 1. lower_case_table_names=1: Para evitar errores de mayúsculas/minúsculas entre Mac y Linux.
+    # 2. sql-mode="": Desactiva ONLY_FULL_GROUP_BY para compatibilidad con consultas antiguas.
+    command: --lower_case_table_names=1 --sql-mode=""
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: symfony_db
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - lamp-network
+
+networks:
+  lamp-network:
+    driver: bridge
